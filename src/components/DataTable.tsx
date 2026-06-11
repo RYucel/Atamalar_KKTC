@@ -11,6 +11,26 @@ export default function DataTable() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
 
+  const stats = useMemo(() => {
+    const uniquePersons = new Set(data.map(d => d.person));
+    const mudurCount = data.filter(d => d.position.toLowerCase().includes('müdür')).length;
+    const mustesarCount = data.filter(d => d.position.toLowerCase().includes('müsteşar')).length;
+    
+    const yearly = data.reduce((acc, curr) => {
+      const year = curr.date.split('.')[2] || 'Bilinmiyor';
+      if (!acc[year]) acc[year] = 0;
+      acc[year]++;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return {
+      totalPersons: uniquePersons.size,
+      mudur: mudurCount,
+      mustesar: mustesarCount,
+      yearly
+    };
+  }, [data]);
+
   const handleSort = (key: 'date' | 'person' | 'position' | 'institution') => {
     let direction: 'asc' | 'desc' = 'asc';
     if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
@@ -71,6 +91,34 @@ export default function DataTable() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+        </div>
+      </div>
+
+      {/* Stats Summary First row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 lg:p-6 bg-zinc-950/30 border-b border-zinc-800">
+        <div className="bg-zinc-900/60 p-4 rounded-xl border border-zinc-800">
+          <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Toplam Atanan Kişi</div>
+          <div className="text-3xl font-light text-cyan-400">{stats.totalPersons}</div>
+        </div>
+        <div className="bg-zinc-900/60 p-4 rounded-xl border border-zinc-800">
+          <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Müdür Ataması</div>
+          <div className="text-3xl font-light text-violet-400">{stats.mudur}</div>
+        </div>
+        <div className="bg-zinc-900/60 p-4 rounded-xl border border-zinc-800">
+          <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Müsteşar Ataması</div>
+          <div className="text-3xl font-light text-emerald-400">{stats.mustesar}</div>
+        </div>
+      </div>
+
+      {/* Yearly breakfown */}
+      <div className="px-4 lg:px-6 pt-4 pb-2 border-b border-zinc-800 bg-zinc-900/20">
+        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
+          {Object.entries(stats.yearly).sort(([a], [b]) => a.localeCompare(b)).map(([year, count]) => (
+            <div key={year} className="flex-shrink-0 flex items-center gap-2 bg-zinc-900/50 px-3 py-1.5 rounded-lg border border-zinc-800/80">
+              <span className="text-xs font-mono text-zinc-400">{year}</span>
+              <span className="text-xs font-semibold text-zinc-200">{count}</span>
+            </div>
+          ))}
         </div>
       </div>
 
